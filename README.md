@@ -64,7 +64,7 @@ $ hyperf foo
 ^CReceived signal 2, exiting...
 ```
 
--  `killall php`
+- `killall php`
 
 ```shell
 $ hyperf foo
