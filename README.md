@@ -13,7 +13,7 @@
 ## Installation
 
 ```shell
-composer require friendsofhyperf/command-signals:^1.0
+composer require friendsofhyperf/command-signals:^0.1.0
 ```
 
 ## Usage
