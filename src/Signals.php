@@ -19,6 +19,9 @@ class Signals
 
     protected array $handlers = [];
 
+    /**
+     * @var int[]
+     */
     protected array $waits = [];
 
     public function register(int|array $signo, callable $callback): void
