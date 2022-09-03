@@ -49,13 +49,13 @@ class Signals
         }
 
         $this->waits[$signo] = Coroutine::create(function () use ($signo) {
+            defer(fn () => posix_kill(posix_getpid(), $signo));
+
             while (true) {
                 if (Co::waitSignal($signo, 1)) {
-                    foreach ((array) $this->handlers[$signo] as $callback) {
-                        $callback($signo);
-                    }
+                    $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->handlers[$signo]);
 
-                    posix_kill(posix_getpid(), $signo);
+                    return parallel($callbacks);
                 }
 
                 if ($this->unregistered) {
