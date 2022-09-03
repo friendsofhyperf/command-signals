@@ -24,6 +24,10 @@ class Signals
      */
     protected array $waits = [];
 
+    public function __construct(protected int $concurrent = 0)
+    {
+    }
+
     public function register(int|array $signo, callable $callback): void
     {
         if (is_array($signo)) {
@@ -58,7 +62,7 @@ class Signals
                 if (Co::waitSignal($signo, 1)) {
                     $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->handlers[$signo]);
 
-                    return parallel($callbacks);
+                    return parallel($callbacks, $this->concurrent);
                 }
 
                 if ($this->unregistered) {
