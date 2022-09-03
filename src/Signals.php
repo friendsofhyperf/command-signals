@@ -19,7 +19,14 @@ class Signals
 
     protected array $handlers = [];
 
+    /**
+     * @var int[]
+     */
     protected array $waits = [];
+
+    public function __construct(protected int $concurrent = 0)
+    {
+    }
 
     public function register(int|array $signo, callable $callback): void
     {
@@ -49,13 +56,13 @@ class Signals
         }
 
         $this->waits[$signo] = Coroutine::create(function () use ($signo) {
+            defer(fn () => posix_kill(posix_getpid(), $signo));
+
             while (true) {
                 if (Co::waitSignal($signo, 1)) {
-                    foreach ((array) $this->handlers[$signo] as $callback) {
-                        $callback($signo);
-                    }
+                    $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->handlers[$signo]);
 
-                    posix_kill(posix_getpid(), $signo);
+                    return parallel($callbacks, $this->concurrent);
                 }
 
                 if ($this->unregistered) {
