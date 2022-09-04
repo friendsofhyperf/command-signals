@@ -4,14 +4,13 @@ declare(strict_types=1);
 /**
  * This file is part of command-signals.
  *
- * @link     https://code.addcn.com/friendsofhyperf/command-signals
- * @document https://code.addcn.com/friendsofhyperf/command-signals/blob/main/README.md
- * @contact  greezen@addcn.com
+ * @link     https://github.com/friendsofhyperf/command-signals
+ * @document https://github.com/friendsofhyperf/command-signals/blob/main/README.md
+ * @contact  huangdijia@gmail.com
  */
 namespace FriendsOfHyperf\CommandSignals;
 
 use Hyperf\Utils\Coroutine;
-use Swoole\Coroutine as Co;
 
 class Signals
 {
@@ -24,7 +23,7 @@ class Signals
      */
     protected array $waits = [];
 
-    public function __construct(protected int $concurrent = 0)
+    public function __construct(protected SignalInterface $signal, protected int $concurrent = 0)
     {
     }
 
@@ -59,7 +58,7 @@ class Signals
             defer(fn () => posix_kill(posix_getpid(), $signo));
 
             while (true) {
-                if (Co::waitSignal($signo, 1)) {
+                if ($this->signal->wait($signo, 1)) {
                     $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->handlers[$signo]);
 
                     return parallel($callbacks, $this->concurrent);

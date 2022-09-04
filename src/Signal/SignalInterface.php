@@ -10,14 +10,7 @@ declare(strict_types=1);
  */
 namespace FriendsOfHyperf\CommandSignals;
 
-class ConfigProvider
+interface SignalInterface
 {
-    public function __invoke()
-    {
-        return [
-            'dependencies' => [
-                SignalInterface::class => extension_loaded('swow') ? SwowSignal::class : SwooleSignal::class,
-            ],
-        ];
-    }
+    public function wait(int $signo, float $timeout = -1): bool;
 }
