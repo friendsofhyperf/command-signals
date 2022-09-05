@@ -10,6 +10,7 @@ declare(strict_types=1);
  */
 namespace FriendsOfHyperf\CommandSignals;
 
+use Hyperf\Engine\Signal;
 use Hyperf\Utils\Coroutine;
 
 class Signals
@@ -23,7 +24,7 @@ class Signals
      */
     protected array $waits = [];
 
-    public function __construct(protected SignalInterface $signal, protected int $concurrent = 0)
+    public function __construct(protected int $concurrent = 0)
     {
     }
 
@@ -58,7 +59,7 @@ class Signals
             defer(fn () => posix_kill(posix_getpid(), $signo));
 
             while (true) {
-                if ($this->signal->wait($signo, 1)) {
+                if (Signal::wait($signo, 1)) {
                     $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->handlers[$signo]);
 
                     return parallel($callbacks, $this->concurrent);

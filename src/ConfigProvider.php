@@ -15,9 +15,7 @@ class ConfigProvider
     public function __invoke()
     {
         return [
-            'dependencies' => [
-                SignalInterface::class => extension_loaded('swow') ? SwowSignal::class : SwooleSignal::class,
-            ],
+            'dependencies' => [],
         ];
     }
 }
