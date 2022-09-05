@@ -10,14 +10,14 @@ declare(strict_types=1);
  */
 namespace FriendsOfHyperf\CommandSignals\Traits;
 
-use FriendsOfHyperf\CommandSignals\Signals;
+use FriendsOfHyperf\CommandSignals\SignalRegistry;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use TypeError;
 
 trait InteractsWithSignals
 {
-    protected ?Signals $signals = null;
+    protected ?SignalRegistry $SignalRegistry = null;
 
     /**
      * Define a callback to be run when the given signal(s) occurs.
@@ -30,11 +30,11 @@ trait InteractsWithSignals
      */
     protected function trap(array|int $signo, callable $callback): void
     {
-        if (! $this->signals) {
-            $this->signals = make(Signals::class);
-            defer(fn () => $this->signals->unregister());
+        if (! $this->SignalRegistry) {
+            $this->SignalRegistry = make(SignalRegistry::class);
+            defer(fn () => $this->SignalRegistry->unregister());
         }
 
-        $this->signals->register($signo, $callback);
+        $this->SignalRegistry->register($signo, $callback);
     }
 }
