@@ -13,9 +13,9 @@ namespace FriendsOfHyperf\CommandSignals;
 use Hyperf\Engine\Signal;
 use Hyperf\Utils\Coroutine;
 
-class Signals
+class SignalRegistry
 {
-    protected array $handlers = [];
+    protected array $signalHandlers = [];
 
     /**
      * @var int[]
@@ -28,16 +28,16 @@ class Signals
     {
     }
 
-    public function register(int|array $signo, callable $callback): void
+    public function register(int|array $signo, callable $signalHandler): void
     {
         if (is_array($signo)) {
-            array_map(fn ($s) => $this->register((int) $s, $callback), $signo);
+            array_map(fn ($s) => $this->register((int) $s, $signalHandler), $signo);
             return;
         }
 
-        $this->handlers[$signo] ??= [];
-        $this->handlers[$signo][] = $callback;
-        $this->wait($signo);
+        $this->signalHandlers[$signo] ??= [];
+        $this->signalHandlers[$signo][] = $signalHandler;
+        $this->handleSignal($signo);
     }
 
     public function unregister(): void
@@ -45,7 +45,7 @@ class Signals
         $this->unregistered = true;
     }
 
-    protected function wait(int $signo): void
+    protected function handleSignal(int $signo): void
     {
         if (isset($this->registered[$signo])) {
             return;
@@ -56,7 +56,7 @@ class Signals
 
             while (true) {
                 if (Signal::wait($signo, 1)) {
-                    $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->handlers[$signo]);
+                    $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->signalHandlers[$signo]);
 
                     return parallel($callbacks, $this->concurrent);
                 }
