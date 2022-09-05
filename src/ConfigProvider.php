@@ -14,8 +14,6 @@ class ConfigProvider
 {
     public function __invoke()
     {
-        return [
-            'dependencies' => [],
-        ];
+        return [];
     }
 }

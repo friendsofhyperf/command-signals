@@ -15,14 +15,14 @@ use Hyperf\Utils\Coroutine;
 
 class Signals
 {
-    protected bool $unregistered = false;
-
     protected array $handlers = [];
 
     /**
      * @var int[]
      */
-    protected array $waits = [];
+    protected array $registered = [];
+
+    protected bool $unregistered = false;
 
     public function __construct(protected int $concurrent = 0)
     {
@@ -35,12 +35,8 @@ class Signals
             return;
         }
 
-        if (! isset($this->handlers[$signo])) {
-            $this->handlers[$signo] = [];
-        }
-
+        $this->handlers[$signo] ??= [];
         $this->handlers[$signo][] = $callback;
-
         $this->wait($signo);
     }
 
@@ -51,11 +47,11 @@ class Signals
 
     protected function wait(int $signo): void
     {
-        if (isset($this->waits[$signo])) {
+        if (isset($this->registered[$signo])) {
             return;
         }
 
-        $this->waits[$signo] = Coroutine::create(function () use ($signo) {
+        $this->registered[$signo] = Coroutine::create(function () use ($signo) {
             defer(fn () => posix_kill(posix_getpid(), $signo));
 
             while (true) {
