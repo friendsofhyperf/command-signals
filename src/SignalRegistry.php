@@ -20,11 +20,11 @@ class SignalRegistry
     /**
      * @var int[]
      */
-    protected array $registered = [];
+    protected array $handling = [];
 
     protected bool $unregistered = false;
 
-    public function __construct(protected int $concurrent = 0)
+    public function __construct(protected int $timeout = 1, protected int $concurrent = 0)
     {
     }
 
@@ -37,6 +37,11 @@ class SignalRegistry
 
         $this->signalHandlers[$signo] ??= [];
         $this->signalHandlers[$signo][] = $signalHandler;
+
+        if ($this->isSignalHandling($signo)) {
+            return;
+        }
+
         $this->handleSignal($signo);
     }
 
@@ -47,15 +52,11 @@ class SignalRegistry
 
     protected function handleSignal(int $signo): void
     {
-        if (isset($this->registered[$signo])) {
-            return;
-        }
-
-        $this->registered[$signo] = Coroutine::create(function () use ($signo) {
+        $this->handling[$signo] = Coroutine::create(function () use ($signo) {
             defer(fn () => posix_kill(posix_getpid(), $signo));
 
             while (true) {
-                if (Signal::wait($signo, 1)) {
+                if (Signal::wait($signo, $this->timeout)) {
                     $callbacks = array_map(fn ($callback) => fn () => $callback($signo), $this->signalHandlers[$signo]);
 
                     return parallel($callbacks, $this->concurrent);
@@ -66,5 +67,10 @@ class SignalRegistry
                 }
             }
         });
+    }
+
+    protected function isSignalHandling(int $signo): bool
+    {
+        return isset($this->handling[$signo]);
     }
 }
